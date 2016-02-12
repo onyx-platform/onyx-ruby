@@ -1,29 +1,27 @@
-# Shim
+# Ruby Shim
 
-TODO: Write a gem description
-
-## Installation
-
-Add this line to your application's Gemfile:
-
-    gem 'shim'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install shim
+Basic POC to show messaging with Ruby Gem via an Aeron client through Ruby FFI
 
 ## Usage
 
-TODO: Write usage instructions here
+Clone Aeron from [here](https://github.com/real-logic/Aeron). Build, then run the media driver
 
-## Contributing
+```
+$ ./gradlew
+java -cp aeron-samples/build/libs/samples.jar uk.co.real_logic.aeron.driver.MediaDriver
+```
 
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+Build the Aeron subscriber library to be called by the shim script and the 
+BasicPublisher client for testing. Then run the Ruby script. 
+ 
+```
+$ cd ext
+$ make
+$ ./BasicPublisher
+
+$ cd ..
+$ ruby lib/app.rb
+```
+
+The Ruby script will receive a message with an :onyx/fn and :onyx/params, then call that 
+function and return a result.
