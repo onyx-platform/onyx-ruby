@@ -9,7 +9,7 @@ BasicSubscriber.o: BasicSubscriber.cpp libaeron_client.a
 	g++ $(CXX_FLAGS) BasicSubscriber.cpp -I.
 
 shared: BasicSubscriber.o
-	g++ -Wall -std=c++11 -fexceptions -g -m64 -Wsign-compare -O3 -DNDEBUG -Ofast -DDISABLE_BOUNDS_CHECKS -bundle -Wl,-headerpad_max_install_names  -o libsubscriber.so BasicSubscriber.o libaeron_client.a
+	g++ -Wall -std=c++11 -fexceptions -g -m64 -Wsign-compare -O3 -DNDEBUG -Ofast -DDISABLE_BOUNDS_CHECKS -Wl,-headerpad_max_install_names  -o libsubscriber.so BasicSubscriber.o libaeron_client.a
 
 BasicPublisher.o: BasicPublisher.cpp libaeron_client.a
 	g++ $(CXX_FLAGS) BasicPublisher.cpp -I.
