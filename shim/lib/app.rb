@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'JSON'
+require 'json'
 require 'ffi'
 
 
