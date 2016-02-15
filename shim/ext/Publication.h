@@ -128,13 +128,13 @@ public:
     }
 
     /**
-     * Has this Publication been connected to a Subscription?
+     * Has this Publication seen an active subscriber recently?
      *
-     * @return true if this Publication been connected to a Subscription otherwise false.
+     * @return true if this Publication has seen an active subscriber recently.
      */
-    inline bool hasBeenConnected()
+    inline bool isConnected() const
     {
-        return (m_publicationLimit.getVolatile() > 0);
+        return !isClosed() && isPublicationConnected(LogBufferDescriptor::timeOfLastStatusMessage(m_logMetaDataBuffer));
     }
 
     /**
@@ -229,13 +229,13 @@ public:
 
                 newPosition = Publication::newPosition(partitionIndex, static_cast<std::int32_t>(termOffset), position, appendResult);
             }
-            else if (0 == limit)
+            else if (isPublicationConnected(LogBufferDescriptor::timeOfLastStatusMessage(m_logMetaDataBuffer)))
             {
-                newPosition = NOT_CONNECTED;
+                newPosition = BACK_PRESSURED;
             }
             else
             {
-                newPosition = BACK_PRESSURED;
+                newPosition = NOT_CONNECTED;
             }
         }
 
@@ -308,13 +308,13 @@ public:
                 termAppender->claim(claimResult, m_headerWriter, length, bufferClaim);
                 newPosition = Publication::newPosition(partitionIndex, static_cast<std::int32_t>(termOffset), position, claimResult);
             }
-            else if (0 == limit)
+            else if (isPublicationConnected(LogBufferDescriptor::timeOfLastStatusMessage(m_logMetaDataBuffer)))
             {
-                newPosition = NOT_CONNECTED;
+                newPosition = BACK_PRESSURED;
             }
             else
             {
-                newPosition = BACK_PRESSURED;
+                newPosition = NOT_CONNECTED;
             }
         }
 
@@ -379,6 +379,8 @@ private:
                     m_maxPayloadLength, length), SOURCEINFO);
         }
     }
+
+    bool isPublicationConnected(std::int64_t timeOfLastStatusMessage) const;
 };
 
 }

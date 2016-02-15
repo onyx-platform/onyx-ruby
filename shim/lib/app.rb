@@ -5,7 +5,10 @@ require 'ffi'
 
 module AeronSubscriber 
   extend FFI::Library
-  ffi_lib ['subscriber', 'libsubscriber.so']
+  ffi_lib File.join(File.expand_path(__FILE__).split("/").tap do |path|
+    path.pop
+    path << "libsubscriber.so"
+  end)
   attach_function :subscribe, [ ], :int, :blocking => true
   attach_function :unsubscribe, [ ], :void
   attach_function :poll, [ :strptr, :int ], :int

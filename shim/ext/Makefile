@@ -3,19 +3,19 @@ CXX_FLAGS = -Wall -std=c++11 -fexceptions -g -m64 -Wsign-compare -O3 -DNDEBUG -O
 default: install
 
 install: shared BasicPublisher
-	mv libsubscriber.so ..
+	mv libsubscriber.so ../lib
 
 BasicSubscriber.o: BasicSubscriber.cpp libaeron_client.a
 	g++ $(CXX_FLAGS) BasicSubscriber.cpp -I.
 
 shared: BasicSubscriber.o
-	g++ -Wall -std=c++11 -fexceptions -g -m64 -Wsign-compare -O3 -DNDEBUG -Ofast -DDISABLE_BOUNDS_CHECKS -Wl,-headerpad_max_install_names  -o libsubscriber.so BasicSubscriber.o libaeron_client.a
+	g++ -Wall -std=c++11 -fexceptions -g -m64 -Wsign-compare -O3 -DNDEBUG -Ofast -DDISABLE_BOUNDS_CHECKS -shared -Wl,-headerpad_max_install_names  -o libsubscriber.so BasicSubscriber.o libaeron_client.a
 
 BasicPublisher.o: BasicPublisher.cpp libaeron_client.a
 	g++ $(CXX_FLAGS) BasicPublisher.cpp -I.
 
 BasicPublisher: BasicPublisher.o
-	g++ -Wall -std=c++11 -fexceptions -g -m64 -Wsign-compare -O3 -DNDEBUG -Ofast -DDISABLE_BOUNDS_CHECKS -Wl,-search_paths_first -Wl,-headerpad_max_install_names BasicPublisher.o -o BasicPublisher libaeron_client.a 
+	g++ -Wall -std=c++11 -fexceptions -g -m64 -O3 -DNDEBUG -Ofast -DDISABLE_BOUNDS_CHECKS BasicPublisher.o -o BasicPublisher -rdynamic libaeron_client.a -lpthread	
 
 Aeron.o: Aeron.cpp
 	g++ $(CXX_FLAGS) Aeron.cpp -I.
@@ -48,4 +48,4 @@ libaeron_client.a: Publication.o Subscription.o ClientConductor.o Aeron.o LogBuf
 	ar rcs libaeron_client.a Publication.o Subscription.o ClientConductor.o Aeron.o LogBuffers.o MemoryMappedFile.o CommandOption.o CommandOptionParser.o StringUtil.o
 
 clean:
-	rm *.o ../*.so *.a
+	rm *.o ../lib/*.so *.a BasicPublisher

@@ -58,4 +58,9 @@ Publication::~Publication()
     m_conductor.releasePublication(m_registrationId);
 }
 
+bool Publication::isPublicationConnected(std::int64_t timeOfLastStatusMessage) const
+{
+    return m_conductor.isPublicationConnected(timeOfLastStatusMessage);
+}
+
 }
