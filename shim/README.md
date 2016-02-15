@@ -17,9 +17,10 @@ BasicPublisher client for testing. Then run the Ruby script.
 ```
 $ cd ext
 $ make
-$ ./BasicPublisher
+$ ./BasicPublisher  > /dev/null 2>&1 &
 
 $ cd ..
+$ bundle install
 $ ruby lib/app.rb
 ```
 
