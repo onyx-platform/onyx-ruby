@@ -35,7 +35,9 @@ threads << Thread.new{AeronSubscriber.subscribe}
 
 threads << Thread.new do
   loop do 
-    messagePtr = FFI::MemoryPointer.new(:char, 1000) # need to free this memory
+    # The FFI::MemoryPointer class allocates native memory with automatic garbage collection as a sweetener. 
+    # When a MemoryPointer goes out of scope, the memory is freed up as part of the garbage collection process.
+    messagePtr = FFI::MemoryPointer.new(:char, 1000) 
     ret = AeronSubscriber.poll(messagePtr, 1000)
     if ret > 0 then 
       message = messagePtr.get_string(0, 1000)
