@@ -9,7 +9,7 @@ module AeronSubscriber
     path.pop
     path << "libsubscriber.so"
   end)
-  attach_function :subscribe, [ ], :int, :blocking => true
+  attach_function :subscribe, [ :string, :int ], :int, :blocking => true
   attach_function :unsubscribe, [ ], :void
   attach_function :poll, [ :strptr, :int ], :int
 end
@@ -31,7 +31,7 @@ threads = []
 
 Thread.abort_on_exception = true
 
-threads << Thread.new{AeronSubscriber.subscribe}
+threads << Thread.new { AeronSubscriber.subscribe("aeron:udp?remote=localhost:40123", 10) }
 
 threads << Thread.new do
   loop do 

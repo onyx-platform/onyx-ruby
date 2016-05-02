@@ -38,11 +38,9 @@ static const int FRAGMENTS_LIMIT = 10;
 struct Settings
 {
     std::string dirPrefix = "";
-    std::string channel = samples::configuration::DEFAULT_CHANNEL;
-    std::int32_t streamId = samples::configuration::DEFAULT_STREAM_ID;
 };
 
-fragment_handler_t printStringMessage()
+fragment_handler_t saveMessage()
 {
     return [&](AtomicBuffer& buffer, util::index_t offset, util::index_t length, Header& header)
     {
@@ -57,14 +55,14 @@ void unsubscribe()
   running = false;
 }
 
-int subscribe()
+int subscribe( char* channel, int streamId )
 {
 
     try
     {
         Settings settings;
 
-        std::cout << "Subscribing to channel " << settings.channel << " on Stream ID " << settings.streamId << std::endl;
+        std::cout << "Subscribing to channel " << channel << " on Stream ID " << streamId << std::endl;
 
         aeron::Context context;
 
@@ -94,7 +92,7 @@ int subscribe()
         std::shared_ptr<Aeron> aeron = Aeron::connect(context);
 
         // add the subscription to start the process
-        std::int64_t id = aeron->addSubscription(settings.channel, settings.streamId);
+        std::int64_t id = aeron->addSubscription(channel, streamId);
 
         std::shared_ptr<Subscription> subscription = aeron->findSubscription(id);
         // wait for the subscription to be valid
@@ -104,7 +102,7 @@ int subscribe()
             subscription = aeron->findSubscription(id);
         }
 
-        fragment_handler_t handler = printStringMessage();
+        fragment_handler_t handler = saveMessage();
         SleepingIdleStrategy idleStrategy(IDLE_SLEEP_MS);
 
         while (running)
