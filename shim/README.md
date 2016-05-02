@@ -4,7 +4,7 @@ Basic POC to show messaging with Ruby Gem via an Aeron client through Ruby FFI
 
 ## Usage
 
-Clone Aeron from [here](https://github.com/real-logic/Aeron). This uses version 0.9.2 of the Aeron client. (Upgrading would involve swapping out files in the `ext` directory.) Build, then run the media driver
+Clone Aeron from [here](https://github.com/real-logic/Aeron/tree/0.9.2). This uses version 0.9.2 of the Aeron client. (Upgrading would involve swapping out files in the `ext` directory.) Build, then run the media driver
 
 ```
 $ ./gradlew
