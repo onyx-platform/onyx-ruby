@@ -14,6 +14,15 @@ module AeronSubscriber
   attach_function :poll, [ :strptr, :int ], :int
 end
 
+module AeronPublisher
+  extend FFI::Library
+  ffi_lib File.join(File.expand_path(__FILE__).split("/").tap do |path|
+    path.pop
+    path << "libpublisher.so"
+  end)
+  attach_function :publish, [ :string, :int, :string ], :int, :blocking => true
+end
+
 def inc(n)
   n + 1
 end
@@ -42,6 +51,7 @@ threads << Thread.new do
     if ret > 0 then 
       message = messagePtr.get_string(0, 1000)
       result = handle_message(message) 
+      ret = AeronPublisher.publish("aeron:udp?remote=localhost:40123", 11, result)
       puts result
     end
   end

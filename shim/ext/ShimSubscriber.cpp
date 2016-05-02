@@ -16,80 +16,53 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <string.h>
 #include <signal.h>
 #include <util/CommandOptionParser.h>
 #include <thread>
+#include <queue>
 #include "Configuration.h"
+#include "ShimSubscriber.h"
 #include <Aeron.h>
 
 using namespace aeron::util;
 using namespace aeron;
 
 std::atomic<bool> running (true);
-
-void sigIntHandler (int param)
-{
-    running = false;
-}
-
-static const char optHelp     = 'h';
-static const char optPrefix   = 'p';
-static const char optChannel  = 'c';
-static const char optStreamId = 's';
+std::queue<std::string> messagequeue;
 
 static const std::chrono::duration<long, std::milli> IDLE_SLEEP_MS(1);
+static const std::chrono::duration<long, std::milli> IDLE_SLEEP_MS_2(1000);
 static const int FRAGMENTS_LIMIT = 10;
 
 struct Settings
 {
     std::string dirPrefix = "";
-    std::string channel = samples::configuration::DEFAULT_CHANNEL;
-    std::int32_t streamId = samples::configuration::DEFAULT_STREAM_ID;
 };
 
-Settings parseCmdLine(CommandOptionParser& cp, int argc, char** argv)
-{
-    cp.parse(argc, argv);
-    if (cp.getOption(optHelp).isPresent())
-    {
-        cp.displayOptionsHelp(std::cout);
-        exit(0);
-    }
-
-    Settings s;
-
-    s.dirPrefix = cp.getOption(optPrefix).getParam(0, s.dirPrefix);
-    s.channel = cp.getOption(optChannel).getParam(0, s.channel);
-    s.streamId = cp.getOption(optStreamId).getParamAsInt(0, 1, INT32_MAX, s.streamId);
-
-    return s;
-}
-
-fragment_handler_t printStringMessage()
+fragment_handler_t saveMessage()
 {
     return [&](AtomicBuffer& buffer, util::index_t offset, util::index_t length, Header& header)
     {
-        std::cout << "Message to stream " << header.streamId() << " from session " << header.sessionId();
-        std::cout << "(" << length << "@" << offset << ") <<";
-        std::cout << std::string((char *)buffer.buffer() + offset, (unsigned long)length) << ">>" << std::endl;
+        messagequeue.push(std::string((char *)buffer.buffer() + offset, (unsigned long)length));
     };
 }
 
-int main(int argc, char** argv)
+extern "C"
 {
-    CommandOptionParser cp;
-    cp.addOption(CommandOption (optHelp,     0, 0, "                Displays help information."));
-    cp.addOption(CommandOption (optPrefix,   1, 1, "dir             Prefix directory for aeron driver."));
-    cp.addOption(CommandOption (optChannel,  1, 1, "channel         Channel."));
-    cp.addOption(CommandOption (optStreamId, 1, 1, "streamId        Stream ID."));
+void unsubscribe()
+{
+  running = false;
+}
 
-    signal (SIGINT, sigIntHandler);
+int subscribe( char* channel, int streamId )
+{
 
     try
     {
-        Settings settings = parseCmdLine(cp, argc, argv);
+        Settings settings;
 
-        std::cout << "Subscribing to channel " << settings.channel << " on Stream ID " << settings.streamId << std::endl;
+        std::cout << "Subscribing to channel " << channel << " on Stream ID " << streamId << std::endl;
 
         aeron::Context context;
 
@@ -119,7 +92,7 @@ int main(int argc, char** argv)
         std::shared_ptr<Aeron> aeron = Aeron::connect(context);
 
         // add the subscription to start the process
-        std::int64_t id = aeron->addSubscription(settings.channel, settings.streamId);
+        std::int64_t id = aeron->addSubscription(channel, streamId);
 
         std::shared_ptr<Subscription> subscription = aeron->findSubscription(id);
         // wait for the subscription to be valid
@@ -129,7 +102,7 @@ int main(int argc, char** argv)
             subscription = aeron->findSubscription(id);
         }
 
-        fragment_handler_t handler = printStringMessage();
+        fragment_handler_t handler = saveMessage();
         SleepingIdleStrategy idleStrategy(IDLE_SLEEP_MS);
 
         while (running)
@@ -137,13 +110,14 @@ int main(int argc, char** argv)
             const int fragmentsRead = subscription->poll(handler, FRAGMENTS_LIMIT);
 
             idleStrategy.idle(fragmentsRead);
+            
+            if (fragmentsRead > 0) { std::this_thread::sleep_for(IDLE_SLEEP_MS_2);}
         }
 
     }
     catch (CommandOptionException& e)
     {
         std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-        cp.displayOptionsHelp(std::cerr);
         return -1;
     }
     catch (SourcedException& e)
@@ -158,4 +132,21 @@ int main(int argc, char** argv)
     }
 
     return 0;
+}
+
+int poll(char* message, int n)
+{
+  if (!messagequeue.empty())
+  {
+    std::string messageStr = messagequeue.front();
+    messagequeue.pop();
+    
+    strncpy(message, messageStr.c_str(), n - 1);
+    message[n - 1] = '\0';
+
+    return 1;
+  }
+  
+  return 0;
+}
 }
