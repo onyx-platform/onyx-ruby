@@ -4,7 +4,7 @@ POC to play with ideas for experimental other language support in Onyx
 
 ## Usage
 
-See the [Ruby Shim project](shim/README.md) contained in this repository.
+See the [Ruby Shim project](shim) contained in this repository.
 
 ## License
 
